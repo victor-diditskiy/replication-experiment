@@ -1,8 +1,9 @@
 package alive
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
+
+	"github.com/sirupsen/logrus"
 )
 
 type HealthCheckHandler struct {
