@@ -20,6 +20,7 @@ const (
 
 func main() {
 	log := logrus.New()
+	log.SetFormatter(&logrus.JSONFormatter{})
 
 	pool, err := dbpool.NewPool(DBConfigPath)
 	if err != nil {
