@@ -68,3 +68,10 @@ func (p *DBPool) GetLeader() *sql.DB {
 	// TODO: configure returning random leader
 	return p.leaders[0]
 }
+
+func (p *DBPool) AllInstances() []*sql.DB {
+	inst := make([]*sql.DB, 0, len(p.leaders)+len(p.followers))
+	inst = append(inst, p.leaders...)
+	inst = append(inst, p.followers...)
+	return inst
+}
