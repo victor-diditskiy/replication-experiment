@@ -16,6 +16,9 @@ type Config struct {
 	}
 }
 
+// DBPool is container for db instances. Is has two group if db instances: leaders and follower.
+// Leaders are used to perform write only operations. Followers are used to read only operations.
+// It's possible to configure same db as leader and follower to perform both operation types.
 type DBPool struct {
 	leaders   []*sql.DB
 	followers []*sql.DB
@@ -67,6 +70,11 @@ func createDB(dsn string) (*sql.DB, error) {
 func (p *DBPool) GetLeader() *sql.DB {
 	// TODO: configure returning random leader
 	return p.leaders[0]
+}
+
+func (p *DBPool) GetFollower() *sql.DB {
+	// TODO: configure returning random follower
+	return p.followers[0]
 }
 
 func (p *DBPool) AllInstances() []*sql.DB {

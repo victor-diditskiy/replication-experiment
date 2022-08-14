@@ -40,7 +40,7 @@ func (g *Generator) Generate(ctx context.Context, limit int64) error {
 				case <-ctx.Done():
 					return
 				case <-ch:
-					err := g.storage.Save(entity.RandomData())
+					err := g.storage.Insert(entity.RandomData())
 					if err != nil {
 						g.log.Error(err)
 					}
