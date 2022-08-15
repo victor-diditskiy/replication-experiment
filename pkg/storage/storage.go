@@ -19,6 +19,11 @@ const (
 	countSql = "select count(*) from data"
 )
 
+type CombinedStorage interface {
+	Leader
+	Follower
+}
+
 type Leader interface {
 	Insert(data entity.Data) error
 	Update(data entity.Data) error
@@ -72,6 +77,9 @@ func (s *Storage) Get(id int64) (*entity.Data, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed execute get query")
 	}
+	defer rows.Close()
+
+	rows.Next()
 
 	data := &entity.Data{}
 	err = rows.Scan(&data.ID, &data.Name, &data.Value, &data.CreatedAt, &data.UpdatedAt)
@@ -89,6 +97,9 @@ func (s *Storage) Count() (int64, error) {
 	if err != nil {
 		return 0, errors.Wrap(err, "failed execute count query")
 	}
+	defer rows.Close()
+
+	rows.Next()
 
 	var count int64
 	err = rows.Scan(&count)
