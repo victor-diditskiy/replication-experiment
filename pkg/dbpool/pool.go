@@ -14,6 +14,9 @@ type Config struct {
 	Leaders []struct {
 		DSN string
 	}
+	Followers []struct {
+		DSN string
+	}
 }
 
 // DBPool is container for db instances. Is has two group if db instances: leaders and follower.
@@ -51,6 +54,20 @@ func NewPool(dbConfigPath string) (*DBPool, error) {
 		pool.leaders = append(pool.leaders, db)
 	}
 
+	for i, follower := range conf.Followers {
+		if follower.DSN == "" {
+			return nil, fmt.Errorf("no DSN set for follower #%d", i)
+		}
+
+		db, err := createDB(follower.DSN)
+
+		if err != nil {
+			return nil, errors.Wrap(err, "failed to init DB connection")
+		}
+
+		pool.followers = append(pool.followers, db)
+	}
+
 	return pool, nil
 }
 
@@ -64,6 +81,7 @@ func createDB(dsn string) (*sql.DB, error) {
 		return nil, errors.Wrap(err, "failed to ping db")
 	}
 
+	db.SetMaxOpenConns(5)
 	return db, nil
 }
 

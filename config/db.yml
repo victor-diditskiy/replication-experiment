@@ -1,3 +1,4 @@
 leaders:
   - dsn: "postgresql://postgres@localhost:5432/replication_experiment?sslmode=disable"
 followers:
+  - dsn: "postgresql://postgres@localhost:5432/replication_experiment?sslmode=disable"
