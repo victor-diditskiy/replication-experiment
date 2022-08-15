@@ -80,6 +80,7 @@ func (iw *InsertWorkload) Stop(_ Config) error {
 	}
 
 	iw.contextCancel()
+	iw.started = false
 
 	return nil
 }

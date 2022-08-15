@@ -115,6 +115,7 @@ func (uw *UpdateWorkload) Stop(_ Config) error {
 	}
 
 	uw.contextCancel()
+	uw.started = false
 
 	return nil
 }

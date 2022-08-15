@@ -36,7 +36,6 @@ func New(log logrus.FieldLogger, manager *plan.Manager) *Handler {
 }
 
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
 	req := &ExperimentRequest{}
 	err := json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
@@ -84,11 +83,16 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.planManager.Execute(command)
 	if err != nil {
-		h.log.Error(fmt.Sprintf("failed to execute command: %s", err))
+		h.log.Error(fmt.Sprintf("failed to execute start command: %s", err))
 		w.WriteHeader(422)
-		_, _ = w.Write([]byte("{\"status\": \"error\", \"message\": \"failed to execute command\"}"))
+		_, _ = w.Write([]byte("{\"status\": \"error\", \"message\": \"failed to execute start command\"}"))
 		return
 	}
+
+	h.log.WithFields(logrus.Fields{
+		"command":  plan.StartCommand,
+		"planName": req.PlanName,
+	}).Info("plan successfully started")
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)

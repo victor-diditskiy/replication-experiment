@@ -95,6 +95,7 @@ func (rw *ReadWorkload) Stop(_ Config) error {
 	}
 
 	rw.contextCancel()
+	rw.started = false
 
 	return nil
 }

@@ -51,14 +51,14 @@ func (m *Manager) Execute(command Command) error {
 	m.m.Lock()
 	defer m.m.Unlock()
 
-	plan, ok := m.plans[command.PlanName]
-	if !ok {
-		return fmt.Errorf("undefined plan name \"%s\" given", command.PlanName)
-	}
-
 	var err error
 	switch command.Name {
 	case StartCommand:
+		plan, ok := m.plans[command.PlanName]
+		if !ok {
+			return fmt.Errorf("undefined plan name \"%s\" given", command.PlanName)
+		}
+
 		err = m.startPlan(command.Config, plan)
 	case StopCommand:
 		err = m.stopPlan()
@@ -67,7 +67,7 @@ func (m *Manager) Execute(command Command) error {
 	}
 
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute \"%s\" command with \"%s\" plan", command.Name, command.PlanName)
+		return errors.Wrapf(err, "failed to execute \"%s\" command", command.Name)
 	}
 
 	return nil
