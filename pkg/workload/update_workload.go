@@ -20,16 +20,16 @@ type UpdateWorkload struct {
 
 	started bool
 
-	log    logrus.FieldLogger
-	writer storage.Leader
+	log     logrus.FieldLogger
+	storage storage.CombinedStorage
 }
 
-func NewUpdateWorkload(log logrus.FieldLogger, writer storage.Leader) *UpdateWorkload {
+func NewUpdateWorkload(log logrus.FieldLogger, storage storage.CombinedStorage) *UpdateWorkload {
 	return &UpdateWorkload{
 		m:       sync.Mutex{},
 		started: false,
 		log:     log,
-		writer:  writer,
+		storage: storage,
 	}
 }
 
@@ -49,6 +49,36 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 	uw.internalCtx = ctx
 	uw.contextCancel = cancel
 
+	var entriesCount int64
+	countChan := make(chan struct{})
+	go func() {
+		cnt, err := uw.storage.Count()
+		if err != nil {
+			uw.log.
+				Error(fmt.Sprintf("failed to count data at storage: %s", err))
+		}
+		entriesCount = cnt
+		countChan <- struct{}{}
+
+		for {
+			select {
+			case <-uw.internalCtx.Done():
+				return
+			default:
+			}
+
+			cnt, err := uw.storage.Count()
+			if err != nil {
+				uw.log.
+					Error(fmt.Sprintf("failed to count data at storage: %s", err))
+			}
+
+			entriesCount = cnt
+		}
+	}()
+
+	<-countChan
+
 	for i := 0; i < conf.ScaleFactor; i++ {
 		go func() {
 			for {
@@ -58,10 +88,10 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 				default:
 				}
 
-				id := rand.Int63n(conf.MaxEntries) + 1
+				id := rand.Int63n(entriesCount)
 				data := entity.RandomData()
 				data.ID = id
-				err := uw.writer.Update(data)
+				err := uw.storage.Update(data)
 				if err != nil {
 					uw.log.
 						WithField("id", id).

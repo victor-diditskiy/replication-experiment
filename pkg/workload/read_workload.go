@@ -53,6 +53,7 @@ func (rw *ReadWorkload) Start(ctx context.Context, conf Config) error {
 			for {
 				select {
 				case <-rw.internalCtx.Done():
+					rw.log.Info("read workload finished")
 					return
 				default:
 				}
@@ -61,10 +62,16 @@ func (rw *ReadWorkload) Start(ctx context.Context, conf Config) error {
 				if err != nil {
 					rw.log.
 						Error(fmt.Sprintf("failed to count data at storage: %s", err))
+
+					continue
+				}
+
+				if count == 0 {
+					continue
 				}
 
 				id := rand.Int63n(count) + 1
-				_, err = rw.reader.Get(conf.MaxEntries)
+				_, err = rw.reader.Get(id)
 				if err != nil {
 					rw.log.
 						WithField("id", id).
