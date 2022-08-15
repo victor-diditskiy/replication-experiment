@@ -3,6 +3,10 @@ package main
 import (
 	"net/http"
 
+	"github.com/victor_diditskiy/replication_experiment/pkg/handlers/experiment/start"
+	"github.com/victor_diditskiy/replication_experiment/pkg/plan"
+	"github.com/victor_diditskiy/replication_experiment/pkg/workload"
+
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
 	"github.com/sirupsen/logrus"
@@ -20,6 +24,7 @@ const (
 
 func main() {
 	log := logrus.New()
+	log.SetReportCaller(true)
 	log.SetFormatter(&logrus.JSONFormatter{})
 
 	pool, err := dbpool.NewPool(DBConfigPath)
@@ -36,12 +41,17 @@ func main() {
 	dbStorage := storage.New(pool)
 	dataGenerator := data_generator.New(log, dbStorage)
 
+	workloads := workload.NewWorkloads(log, dbStorage)
+	planManager := plan.NewManager(workloads)
+
 	healthCheckHandler := alive.New(log)
 	generatorHandler := generator.New(log, dataGenerator)
+	startExperimentHandler := start.New(log, planManager)
 
 	router := mux.NewRouter()
-	router.Path("/alive").Handler(healthCheckHandler)
-	router.Path("/api/generate_data").Handler(generatorHandler)
+	router.Path("/alive").Handler(healthCheckHandler).Methods("GET")
+	router.Path("/api/generate_data").Handler(generatorHandler).Methods("GET")
+	router.Path("/api/experiment/start").Handler(startExperimentHandler).Methods("POST")
 
 	log.Info("Starting web server")
 	err = http.ListenAndServe(":80", router)
