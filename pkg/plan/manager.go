@@ -40,7 +40,9 @@ func NewManager(workloads workload.Workloads) *Manager {
 		workloads: workloads,
 	}
 	plans := Plans{
-		ReadOnlyPlanName: NewReadOnlyPlan(manager),
+		ReadOnlyPlanName:  NewReadOnlyPlan(manager),
+		WriteOnlyPlanName: NewWriteOnlyPlan(manager),
+		ReadWritePlanName: NewReadWritePlan(manager),
 	}
 	manager.plans = plans
 

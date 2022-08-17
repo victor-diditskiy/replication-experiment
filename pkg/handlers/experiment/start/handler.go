@@ -49,12 +49,12 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	var planName plan.Name
 	switch req.PlanName {
-	case "read_only":
+	case "read-only":
 		planName = plan.ReadOnlyPlanName
-	case "write_only":
+	case "write-only":
 		planName = plan.WriteOnlyPlanName
-	case "combined":
-		planName = plan.CombinedPlanName
+	case "read-write":
+		planName = plan.ReadWritePlanName
 	}
 	if planName == "" {
 		message := fmt.Sprintf("invalid request: invalid plan name %s", req.PlanName)

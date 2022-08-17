@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -63,6 +64,7 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 		for {
 			select {
 			case <-uw.internalCtx.Done():
+				uw.log.Info("update workload finished")
 				return
 			default:
 			}
@@ -74,6 +76,8 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 			}
 
 			entriesCount = cnt
+
+			time.Sleep(time.Second)
 		}
 	}()
 
@@ -88,7 +92,15 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 				default:
 				}
 
+				if entriesCount == 0 {
+					time.Sleep(100 * time.Millisecond)
+					continue
+				}
+
 				id := rand.Int63n(entriesCount)
+				if id == 0 {
+					id += 1
+				}
 				data := entity.RandomData()
 				data.ID = id
 				err := uw.storage.Update(data)

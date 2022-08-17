@@ -2,6 +2,7 @@ package workload
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -34,6 +35,47 @@ func NewWorkloads(log logrus.FieldLogger, storage storage.CombinedStorage) Workl
 
 type Config struct {
 	ScaleFactor int
+}
+
+func (w *Workloads) StartWorkload(
+	ctx context.Context,
+	name Name,
+	config Config,
+) error {
+	wl, err := w.findByName(name)
+	if err != nil {
+		return err
+	}
+
+	err = wl.Start(ctx, config)
+	if err != nil {
+		return errors.Wrapf(err, "failed to start %s workload", name)
+	}
+
+	return nil
+}
+
+func (w *Workloads) StopWorkload(name Name) error {
+	wl, err := w.findByName(name)
+	if err != nil {
+		return err
+	}
+
+	err = wl.Stop(Config{})
+	if err != nil {
+		return errors.Wrapf(err, "failed to stop %s workload", name)
+	}
+
+	return nil
+}
+
+func (w *Workloads) findByName(name Name) (Workload, error) {
+	wl, ok := (*w)[name]
+	if !ok {
+		return nil, fmt.Errorf("failed to find %s workload", name)
+	}
+
+	return wl, nil
 }
 
 func (c *Config) Validate() error {
