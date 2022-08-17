@@ -5,6 +5,7 @@ import (
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 
 	"github.com/victor_diditskiy/replication_experiment/pkg/data_generator"
@@ -39,9 +40,10 @@ func main() {
 	}
 
 	dbStorage := storage.New(pool)
-	dataGenerator := data_generator.New(log, dbStorage)
+	metricStorage := storage.NewMetricStorage(dbStorage)
+	dataGenerator := data_generator.New(log, metricStorage)
 
-	workloads := workload.NewWorkloads(log, dbStorage)
+	workloads := workload.NewWorkloads(log, metricStorage)
 	planManager := plan.NewManager(workloads)
 
 	healthCheckHandler := alive.New(log)
@@ -54,6 +56,7 @@ func main() {
 	router.Path("/api/generate_data").Handler(generatorHandler).Methods("GET")
 	router.Path("/api/experiment/start").Handler(startExperimentHandler).Methods("POST")
 	router.Path("/api/experiment/stop").Handler(stopExperimentHandler).Methods("POST")
+	router.Path("/prometheus").Handler(promhttp.Handler())
 
 	log.Info("Starting web server")
 	err = http.ListenAndServe(":80", router)
