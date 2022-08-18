@@ -1,4 +1,21 @@
+## DB configuration
 
+```json
+{
+  "leaders": [
+    {
+      "dsn": "postgresql://postgres@localhost:5432/replication_experiment?sslmode=disable",
+      "poolConnections": 10
+    }
+  ],
+  "followers": [
+    {
+      "dsn": "postgresql://postgres@localhost:5432/replication_experiment?sslmode=disable",
+      "poolConnections": 10
+    }
+  ]
+}
+```
 ## Payload examples
 
 Start read-write workload

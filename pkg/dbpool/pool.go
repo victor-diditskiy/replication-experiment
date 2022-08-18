@@ -2,21 +2,25 @@ package dbpool
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 
 	"github.com/pkg/errors"
-	"gopkg.in/yaml.v3"
 )
 
+const (
+	configDB = "CONFIG_DB"
+)
+
+type DB struct {
+	DSN             string
+	PoolConnections int
+}
 type Config struct {
-	Leaders []struct {
-		DSN string
-	}
-	Followers []struct {
-		DSN string
-	}
+	Leaders   []DB
+	Followers []DB
 }
 
 // DBPool is container for db instances. Is has two group if db instances: leaders and follower.
@@ -28,15 +32,15 @@ type DBPool struct {
 }
 
 func NewPool(dbConfigPath string) (*DBPool, error) {
-	file, err := os.ReadFile(dbConfigPath)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to read db config file")
+	configDBStr := os.Getenv(configDB)
+	if configDBStr == "" {
+		return nil, fmt.Errorf("%s has not been set", configDB)
 	}
 
 	conf := &Config{}
-	err = yaml.Unmarshal(file, conf)
+	err := json.Unmarshal([]byte(configDBStr), conf)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to parse db config file")
+		return nil, errors.Wrap(err, "failed to parse db config")
 	}
 
 	pool := &DBPool{}
@@ -45,7 +49,7 @@ func NewPool(dbConfigPath string) (*DBPool, error) {
 			return nil, fmt.Errorf("no DSN set for leader #%d", i)
 		}
 
-		db, err := createDB(leader.DSN)
+		db, err := createDB(leader)
 
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to init DB connection")
@@ -59,7 +63,7 @@ func NewPool(dbConfigPath string) (*DBPool, error) {
 			return nil, fmt.Errorf("no DSN set for follower #%d", i)
 		}
 
-		db, err := createDB(follower.DSN)
+		db, err := createDB(follower)
 
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to init DB connection")
@@ -71,8 +75,8 @@ func NewPool(dbConfigPath string) (*DBPool, error) {
 	return pool, nil
 }
 
-func createDB(dsn string) (*sql.DB, error) {
-	db, err := sql.Open("postgres", dsn)
+func createDB(dbConfig DB) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dbConfig.DSN)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -81,7 +85,7 @@ func createDB(dsn string) (*sql.DB, error) {
 		return nil, errors.Wrap(err, "failed to ping db")
 	}
 
-	db.SetMaxOpenConns(50)
+	db.SetMaxOpenConns(dbConfig.PoolConnections)
 	return db, nil
 }
 
