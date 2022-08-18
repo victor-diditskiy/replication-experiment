@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	workerLimit = 20
+	workerLimit = 50
 )
 
 type Generator struct {
@@ -27,7 +27,7 @@ func New(log logrus.FieldLogger, storage storage.Leader) *Generator {
 }
 
 func (g *Generator) Generate(ctx context.Context, limit int64) error {
-	ch := make(chan struct{})
+	ch := make(chan struct{}, 100)
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
 

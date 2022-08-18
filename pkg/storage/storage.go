@@ -45,7 +45,7 @@ func New(dbPool *dbpool.DBPool) *Storage {
 }
 
 func (s *Storage) Insert(data entity.Data) error {
-	db := s.dbPool.GetLeader()
+	db := s.dbPool.GetRandomLeader()
 
 	_, err := db.Exec(insertSQL, data.Name, data.Value)
 	if err != nil {
@@ -60,7 +60,7 @@ func (s *Storage) Update(data entity.Data) error {
 		return errors.New("no id set for updating data")
 	}
 
-	db := s.dbPool.GetLeader()
+	db := s.dbPool.GetRandomLeader()
 
 	_, err := db.Exec(updateSQL, data.Name, data.Value, data.ID)
 	if err != nil {
@@ -71,7 +71,7 @@ func (s *Storage) Update(data entity.Data) error {
 }
 
 func (s *Storage) Get(id int64) (*entity.Data, error) {
-	follower := s.dbPool.GetFollower()
+	follower := s.dbPool.GetRandomFollower()
 
 	rows, err := follower.Query(getSql, id)
 	if err != nil {
@@ -91,7 +91,7 @@ func (s *Storage) Get(id int64) (*entity.Data, error) {
 }
 
 func (s *Storage) Count() (int64, error) {
-	follower := s.dbPool.GetFollower()
+	follower := s.dbPool.GetRandomFollower()
 
 	rows, err := follower.Query(countSql)
 	if err != nil {

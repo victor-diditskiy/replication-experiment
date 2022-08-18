@@ -17,7 +17,7 @@ func New(dbPool *dbpool.DBPool) *Migrator {
 }
 
 func (m *Migrator) Up() error {
-	for _, db := range m.dbPool.AllInstances() {
+	for _, db := range m.dbPool.GetLeaders() {
 		driver, err := postgres.WithInstance(db, &postgres.Config{})
 		if err != nil {
 			return errors.Wrap(err, "failed to init postgres wrapper")
@@ -38,7 +38,7 @@ func (m *Migrator) Up() error {
 }
 
 func (m *Migrator) Down() error {
-	for _, db := range m.dbPool.AllInstances() {
+	for _, db := range m.dbPool.GetLeaders() {
 		driver, err := postgres.WithInstance(db, &postgres.Config{})
 		if err != nil {
 			return errors.Wrap(err, "failed to init postgres wrapper")
@@ -59,7 +59,7 @@ func (m *Migrator) Down() error {
 }
 
 func (m *Migrator) Steps(num int) error {
-	for _, db := range m.dbPool.AllInstances() {
+	for _, db := range m.dbPool.GetLeaders() {
 		driver, err := postgres.WithInstance(db, &postgres.Config{})
 		if err != nil {
 			return errors.Wrap(err, "failed to init postgres wrapper")
