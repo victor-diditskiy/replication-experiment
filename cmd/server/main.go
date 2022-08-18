@@ -33,12 +33,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	db := pool.GetLeader()
-	_, err = db.Exec("insert into data (name, value) values ('test', 12345)")
-	if err != nil {
-		log.Fatal(err)
-	}
-
 	dbStorage := storage.New(pool)
 	metricStorage := storage.NewMetricStorage(dbStorage)
 	dataGenerator := data_generator.New(log, metricStorage)

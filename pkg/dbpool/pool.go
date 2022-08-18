@@ -81,23 +81,20 @@ func createDB(dsn string) (*sql.DB, error) {
 		return nil, errors.Wrap(err, "failed to ping db")
 	}
 
-	db.SetMaxOpenConns(5)
+	db.SetMaxOpenConns(50)
 	return db, nil
 }
 
-func (p *DBPool) GetLeader() *sql.DB {
+func (p *DBPool) GetLeaders() []*sql.DB {
+	return p.leaders
+}
+
+func (p *DBPool) GetRandomLeader() *sql.DB {
 	// TODO: configure returning random leader
 	return p.leaders[0]
 }
 
-func (p *DBPool) GetFollower() *sql.DB {
+func (p *DBPool) GetRandomFollower() *sql.DB {
 	// TODO: configure returning random follower
 	return p.followers[0]
-}
-
-func (p *DBPool) AllInstances() []*sql.DB {
-	inst := make([]*sql.DB, 0, len(p.leaders)+len(p.followers))
-	inst = append(inst, p.leaders...)
-	inst = append(inst, p.followers...)
-	return inst
 }
