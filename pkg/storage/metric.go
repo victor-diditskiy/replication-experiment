@@ -53,7 +53,6 @@ func (s *MetricStorage) Get(id int64) (*entity.Data, error) {
 	}()
 
 	return s.storage.Get(id)
-
 }
 
 func (s *MetricStorage) Count() (int64, error) {
@@ -66,5 +65,4 @@ func (s *MetricStorage) Count() (int64, error) {
 	}()
 
 	return s.storage.Count()
-
 }
