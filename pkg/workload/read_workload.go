@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -48,6 +49,39 @@ func (rw *ReadWorkload) Start(ctx context.Context, conf Config) error {
 	rw.internalCtx = ctx
 	rw.contextCancel = cancel
 
+	var entriesCount int64
+	countChan := make(chan struct{})
+	go func() {
+		cnt, err := rw.reader.Count()
+		if err != nil {
+			rw.log.
+				Error(fmt.Sprintf("failed to count data at storage: %s", err))
+		}
+		entriesCount = cnt
+		countChan <- struct{}{}
+
+		for {
+			select {
+			case <-rw.internalCtx.Done():
+				rw.log.Info("update workload finished")
+				return
+			default:
+			}
+
+			cnt, err := rw.reader.Count()
+			if err != nil {
+				rw.log.
+					Error(fmt.Sprintf("failed to count data at storage: %s", err))
+			}
+
+			entriesCount = cnt
+
+			time.Sleep(time.Second)
+		}
+	}()
+
+	<-countChan
+
 	for i := 0; i < conf.ScaleFactor; i++ {
 		go func() {
 			for {
@@ -58,20 +92,12 @@ func (rw *ReadWorkload) Start(ctx context.Context, conf Config) error {
 				default:
 				}
 
-				count, err := rw.reader.Count()
-				if err != nil {
-					rw.log.
-						Error(fmt.Sprintf("failed to count data at storage: %s", err))
-
+				if entriesCount == 0 {
 					continue
 				}
 
-				if count == 0 {
-					continue
-				}
-
-				id := rand.Int63n(count) + 1
-				_, err = rw.reader.Get(id)
+				id := rand.Int63n(entriesCount) + 1
+				_, err := rw.reader.Get(id)
 				if err != nil {
 					rw.log.
 						WithField("id", id).
