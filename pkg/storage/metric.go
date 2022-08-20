@@ -19,16 +19,17 @@ func NewMetricStorage(storage CombinedStorage) *MetricStorage {
 	}
 }
 
-func (s *MetricStorage) Insert(data entity.Data) error {
+func (s *MetricStorage) Insert(data ...entity.Data) error {
 	t := time.Now()
 	defer metric.RequestCounter.With(prometheus.Labels{metric.TypeLabel: metric.WriteType, metric.OperationLabel: metric.InsertOperation}).Inc()
+
 	defer func() {
 		metric.RequestTimingCounter.
 			With(prometheus.Labels{metric.TypeLabel: metric.WriteType, metric.OperationLabel: metric.InsertOperation}).
 			Observe(float64(time.Since(t).Milliseconds()))
 	}()
 
-	return s.storage.Insert(data)
+	return s.storage.Insert(data...)
 }
 
 func (s *MetricStorage) Update(data entity.Data) error {

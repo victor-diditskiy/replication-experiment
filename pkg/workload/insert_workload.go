@@ -48,6 +48,14 @@ func (iw *InsertWorkload) Start(ctx context.Context, conf Config) error {
 	iw.internalCtx = ctx
 	iw.contextCancel = cancel
 
+	if conf.ScaleFactor < 1 {
+		conf.ScaleFactor = 1
+	}
+
+	if conf.BatchSize < 1 {
+		conf.BatchSize = 1
+	}
+
 	for i := 0; i < conf.ScaleFactor; i++ {
 		go func() {
 			for {
@@ -58,7 +66,12 @@ func (iw *InsertWorkload) Start(ctx context.Context, conf Config) error {
 				default:
 				}
 
-				err := iw.writer.Insert(entity.RandomData())
+				dataItems := make([]entity.Data, 0, conf.BatchSize)
+				for i := 0; i < conf.BatchSize; i++ {
+					dataItems = append(dataItems, entity.RandomData())
+				}
+
+				err := iw.writer.Insert(dataItems...)
 				if err != nil {
 					iw.log.
 						Error(fmt.Sprintf("failed to insert data to storage: %s", err))

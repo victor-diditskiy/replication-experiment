@@ -11,7 +11,8 @@ import (
 )
 
 const (
-	workerLimit = 50
+	defaultBatchSize = 10
+	workerLimit      = 50
 )
 
 type Generator struct {
@@ -40,7 +41,12 @@ func (g *Generator) Generate(ctx context.Context, limit int64) error {
 				case <-ctx.Done():
 					return
 				case <-ch:
-					err := g.storage.Insert(entity.RandomData())
+					items := make([]entity.Data, 0, defaultBatchSize)
+					for i := 0; i < defaultBatchSize; i++ {
+						items = append(items, entity.RandomData())
+					}
+
+					err := g.storage.Insert(items...)
 					if err != nil {
 						g.log.Error(err)
 					}
@@ -50,7 +56,7 @@ func (g *Generator) Generate(ctx context.Context, limit int64) error {
 	}
 
 	// TODO: add concurrent saving data
-	for i := int64(0); i < limit; i++ {
+	for i := int64(0); i < limit/defaultBatchSize; i++ {
 		ch <- struct{}{}
 	}
 

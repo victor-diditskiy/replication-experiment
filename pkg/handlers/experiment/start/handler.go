@@ -22,6 +22,7 @@ type ExperimentRequest struct {
 	} `json:"read_workload,omitempty"`
 	InsertWorkload *struct {
 		ScaleFactor int `json:"scale_factor"`
+		BatchSize   int `json:"batch_size"`
 	} `json:"insert_workload,omitempty"`
 	UpdateWorkload *struct {
 		ScaleFactor int `json:"scale_factor"`
@@ -65,11 +66,16 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.ReadWorkload != nil {
-		config.ReadWorkload = &plan.ConfigItem{ScaleFactor: req.ReadWorkload.ScaleFactor}
+		config.ReadWorkload = &plan.ConfigItem{
+			ScaleFactor: req.ReadWorkload.ScaleFactor,
+		}
 	}
 
 	if req.InsertWorkload != nil {
-		config.InsertWorkload = &plan.ConfigItem{ScaleFactor: req.InsertWorkload.ScaleFactor}
+		config.InsertWorkload = &plan.ConfigItem{
+			ScaleFactor: req.InsertWorkload.ScaleFactor,
+			BatchSize:   req.InsertWorkload.BatchSize,
+		}
 	}
 
 	if req.UpdateWorkload != nil {

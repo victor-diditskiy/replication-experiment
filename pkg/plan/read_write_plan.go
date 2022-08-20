@@ -30,7 +30,10 @@ func (p *ReadWritePlan) Start(config Config) error {
 	ctx, _ = context.WithTimeout(ctx, defaultWorkloadTTL)
 
 	if config.InsertWorkload != nil {
-		insertConfig := workload.Config{ScaleFactor: config.InsertWorkload.ScaleFactor}
+		insertConfig := workload.Config{
+			ScaleFactor: config.InsertWorkload.ScaleFactor,
+			BatchSize:   config.ReadWorkload.BatchSize,
+		}
 		err := p.manager.workloads.StartWorkload(ctx, workload.InsertWorkloadName, insertConfig)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan starting failed")

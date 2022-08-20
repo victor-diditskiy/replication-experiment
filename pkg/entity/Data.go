@@ -26,7 +26,7 @@ var names = []string{
 type Data struct {
 	ID        int64
 	Name      string
-	Value     int64
+	Value     int
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -34,8 +34,10 @@ type Data struct {
 func RandomData() Data {
 	l := len(names) - 1
 	i := rand.Intn(l)
+	v := rand.Intn(1_000_000)
+
 	return Data{
 		Name:  names[i],
-		Value: rand.Int63n(10 ^ 9),
+		Value: v,
 	}
 }

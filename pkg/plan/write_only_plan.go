@@ -28,7 +28,10 @@ func (p *WriteOnlyPlan) Start(config Config) error {
 	ctx, _ = context.WithTimeout(ctx, defaultWorkloadTTL)
 
 	if config.InsertWorkload != nil {
-		insertConfig := workload.Config{ScaleFactor: config.InsertWorkload.ScaleFactor}
+		insertConfig := workload.Config{
+			ScaleFactor: config.InsertWorkload.ScaleFactor,
+			BatchSize:   config.InsertWorkload.BatchSize,
+		}
 		err := p.manager.workloads.StartWorkload(ctx, workload.InsertWorkloadName, insertConfig)
 		if err != nil {
 			return errors.Wrap(err, "write-only plan starting failed")

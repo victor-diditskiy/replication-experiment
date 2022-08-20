@@ -1,14 +1,16 @@
 package storage
 
 import (
+	"fmt"
 	"github.com/pkg/errors"
+	"strings"
 
 	"github.com/victor_diditskiy/replication_experiment/pkg/dbpool"
 	"github.com/victor_diditskiy/replication_experiment/pkg/entity"
 )
 
 const (
-	insertSQL = "insert into data (name, value) values ($1, $2)"
+	insertSQL = "insert into data (name, value) values ('{param1}', {param2})"
 	updateSQL = `update data set 
 				 	name = $1,
 					value = $2,
@@ -25,7 +27,7 @@ type CombinedStorage interface {
 }
 
 type Leader interface {
-	Insert(data entity.Data) error
+	Insert(data ...entity.Data) error
 	Update(data entity.Data) error
 }
 
@@ -44,10 +46,21 @@ func New(dbPool *dbpool.DBPool) *Storage {
 	}
 }
 
-func (s *Storage) Insert(data entity.Data) error {
+func (s *Storage) Insert(data ...entity.Data) error {
+	if len(data) == 0 {
+		return errors.New("no data passed")
+	}
 	db := s.dbPool.GetRandomLeader()
 
-	_, err := db.Exec(insertSQL, data.Name, data.Value)
+	var sql = ""
+
+	for _, item := range data {
+		itemSql := strings.Replace(insertSQL, "{param1}", item.Name, 1)
+		itemSql = strings.Replace(itemSql, "{param2}", fmt.Sprintf("%d", item.Value), 1)
+
+		sql += itemSql + "; "
+	}
+	_, err := db.Exec(sql)
 	if err != nil {
 		return errors.Wrap(err, "failed to insert data")
 	}
