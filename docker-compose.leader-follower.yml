@@ -1,0 +1,39 @@
+version: "3"
+services:
+  pg-leader:
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: qwerty
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: ["postgres", "-c", "config_file=/etc/postgresql.conf"]
+    volumes:
+      - 'pg-leader:/var/lib/postgresql/data'
+      - 'pg-archive:/var/lib/postgresql/archive:rw'
+      - './pg_config/leader/postgresql.conf:/etc/postgresql.conf'
+      - './pg_config/leader/pg_hba.conf:/etc/pg_hba.conf'
+    ports:
+      - "54325:5432"
+
+  pg-follower1:
+    image: postgres:14
+    environment:
+      POSTGRES_PASSWORD: qwerty
+      POSTGRES_HOST_AUTH_METHOD: trust
+    command: ["postgres", "-c", "config_file=/etc/postgresql.conf"]
+    #command: ["/bin/bash"]
+    volumes:
+      - 'pg-follower1:/var/lib/postgresql/data'
+      - 'pg-follower1:/var/lib/postgresql/recovered'
+      - 'pg-archive:/var/lib/postgresql/archive:ro'
+      - './pg_config/follower/postgresql.conf:/etc/postgresql.conf'
+      - './pg_config/follower/pg_hba.conf:/etc/pg_hba.conf'
+    ports:
+      - "54326:5432"
+    links:
+      - 'pg-leader'
+
+volumes:
+  pg-leader:
+  pg-follower1:
+  pg-follower1-2:
+  pg-archive:
