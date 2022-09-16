@@ -1,7 +1,7 @@
 CONFIG_DB='{"leaders":[{"dsn":"postgresql://postgres@localhost:5432/replication_experiment?sslmode=disable","poolConnections":10}],"followers":[{"dsn":"postgresql://postgres@localhost:5432/replication_experiment?sslmode=disable","poolConnections":10}]}'
-CONFIG_DB='{"leaders":[{"dsn":"postgresql://user1:Q4QLpgywgXGtT6@pg1:5432/replication_experiment?sslmode=disable","poolConnections":10}],"followers":[{"dsn":"postgresql://user1:Q4QLpgywgXGtT6@pg1:5432/replication_experiment?sslmode=disable","poolConnections":10}]}'
 
 cont = $(docker create replication_experiment_app)
+NODE?=pgleader
 
 .PHONY: migrate-up
 migrate-up:
@@ -17,6 +17,40 @@ migrate-down:
 run:
 	@echo "+ @"
 	CONFIG_DB=$(CONFIG_DB) go run cmd/server/main.go
+
+.PHONY: docker-lf-start
+docker-lf-start:
+	@echo "+ @"
+	docker-compose -f docker-compose.leader-follower.yml up -d
+
+.PHONY: docker-lf-stop
+docker-lf-stop:
+	@echo "+ @"
+	docker-compose -f docker-compose.leader-follower.yml down
+
+.PHONY: docker-lf-restart
+docker-lf-restart:
+	@echo "+ @"
+	docker-compose -f docker-compose.leader-follower.yml restart
+
+.PHONY: docker-lf-logs
+docker-lf-logs:
+	@echo "+ @"
+	docker-compose -f docker-compose.leader-follower.yml logs
+
+.PHONY: docker-lf-exec
+docker-lf-exec:
+	@echo "+ @"
+	docker-compose -f docker-compose.leader-follower.yml exec $(NODE) bash
+
+#
+# Remote server operations
+#
+
+.PHONY: build-and-upload-server
+build-and-deploy-server:
+	make build-server
+	make deploy-server
 
 .PHONY: build-server
 build-server:
@@ -34,9 +68,40 @@ build-migrator:
 
 .PHONY: upload-server
 deploy-server:
-	scp bin/server app1@130.193.34.79:/home/app1/server
+	scp bin/server app@app1:/home/app/server
+	ssh app@app1 sudo setcap cap_net_bind_service+ep server
 
-.PHONY: build-and-upload-server
-build-and-deploy-server:
-	make build-server
-	make deploy-server
+.PHONY: upload-leader-pgconfig
+upload-leader-pgconfig:
+	@echo "+ @"
+	scp pg_config/leader/postgresql.prod.conf pguser@pgleader:/home/pguser/postgresql.conf
+	ssh pguser@pgleader sudo mv postgresql.conf /etc/postgresql/14/main/postgresql.conf
+	ssh pguser@pgleader sudo chown postgres:postgres /etc/postgresql/14/main/postgresql.conf
+	ssh pguser@pgleader sudo systemctl restart postgresql
+
+.PHONY: upload-follower-pgconfig
+upload-follower-pgconfig:
+	@echo "+ @"
+	scp pg_config/follower/postgresql.prod.conf pguser@pgfollower1:/home/pguser/postgresql.conf
+	ssh pguser@pgfollower1 sudo mv postgresql.conf /etc/postgresql/14/main/postgresql.conf
+	ssh pguser@pgfollower1 sudo chown postgres:postgres /etc/postgresql/14/main/postgresql.conf
+	ssh pguser@pgfollower1 sudo systemctl restart postgresql
+
+.PHONY: install-zsh
+install-zsh:
+	@echo "+ @"
+	scp scripts/install_zsh.sh pguser@$(NODE):/home/pguser/install_zsh.sh
+
+	ssh pguser@$(NODE) chmod +x ./install_zsh.sh
+	ssh pguser@$(NODE) sudo ./install_zsh.sh
+
+.PHONY: attach-psql
+attach-psql:
+	@echo "+ @"
+	ssh pguser@$(NODE) -t psql -U postgres
+
+.PHONY: restart-psql
+restart-psql:
+	@echo "+ @"
+	ssh pguser@$(NODE) sudo systemctl restart postgresql
+
