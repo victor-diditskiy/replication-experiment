@@ -61,6 +61,7 @@ func (iw *InsertWorkload) Start(ctx context.Context, conf Config) error {
 			for {
 				select {
 				case <-iw.internalCtx.Done():
+					iw.started = false
 					iw.log.Info("insert workload finished")
 					return
 				default:
