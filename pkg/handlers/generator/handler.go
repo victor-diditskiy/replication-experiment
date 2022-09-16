@@ -16,7 +16,9 @@ type Handler struct {
 }
 
 type GenerateRequest struct {
-	Limit int64 `json:"limit"`
+	BatchSize   int64 `json:"batch_size"`
+	Limit       int64 `json:"limit"`
+	ScaleFactor int64 `json:"scale_factor"`
 }
 
 func New(log logrus.FieldLogger, generator *data_generator.Generator) *Handler {
@@ -37,7 +39,31 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.generator.Generate(r.Context(), req.Limit)
+	if req.BatchSize == 0 {
+		message := "no batch size set"
+		h.log.Error(message)
+		w.WriteHeader(400)
+		_, _ = w.Write([]byte("{\"status\": \"error\", \"message\": \"" + message + "\"}"))
+		return
+	}
+
+	if req.Limit == 0 {
+		message := "no limit set"
+		h.log.Error(message)
+		w.WriteHeader(400)
+		_, _ = w.Write([]byte("{\"status\": \"error\", \"message\": \"" + message + "\"}"))
+		return
+	}
+
+	if req.ScaleFactor == 0 {
+		message := "no scale factor set"
+		h.log.Error(message)
+		w.WriteHeader(400)
+		_, _ = w.Write([]byte("{\"status\": \"error\", \"message\": \"" + message + "\"}"))
+		return
+	}
+
+	err = h.generator.Generate(r.Context(), req.BatchSize, req.Limit, req.ScaleFactor)
 	if err != nil {
 		h.log.Error(fmt.Sprintf("failed to generate data: %s", err))
 		w.WriteHeader(422)

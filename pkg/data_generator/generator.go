@@ -27,12 +27,14 @@ func New(log logrus.FieldLogger, storage storage.Leader) *Generator {
 	}
 }
 
-func (g *Generator) Generate(ctx context.Context, limit int64) error {
-	ch := make(chan struct{}, 100)
+func (g *Generator) Generate(ctx context.Context, batchSize, limit, scaleFactor int64) error {
+	ch := make(chan struct{})
+	defer close(ch)
+
 	wg := sync.WaitGroup{}
 	ctx, cancel := context.WithCancel(ctx)
 
-	for i := 0; i < workerLimit; i++ {
+	for i := int64(0); i < scaleFactor; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -41,8 +43,8 @@ func (g *Generator) Generate(ctx context.Context, limit int64) error {
 				case <-ctx.Done():
 					return
 				case <-ch:
-					items := make([]entity.Data, 0, defaultBatchSize)
-					for i := 0; i < defaultBatchSize; i++ {
+					items := make([]entity.Data, 0, batchSize)
+					for i := int64(0); i < batchSize; i++ {
 						items = append(items, entity.RandomData())
 					}
 
@@ -55,8 +57,7 @@ func (g *Generator) Generate(ctx context.Context, limit int64) error {
 		}()
 	}
 
-	// TODO: add concurrent saving data
-	for i := int64(0); i < limit/defaultBatchSize; i++ {
+	for i := int64(0); i < limit/batchSize; i++ {
 		ch <- struct{}{}
 	}
 
