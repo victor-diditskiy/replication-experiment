@@ -43,7 +43,10 @@ func (p *ReadWritePlan) Start(config Config) error {
 	}
 
 	if config.UpdateWorkload != nil {
-		updateConfig := workload.Config{ScaleFactor: config.UpdateWorkload.ScaleFactor}
+		updateConfig := workload.Config{
+			ScaleFactor: config.UpdateWorkload.ScaleFactor,
+			MaxItems:    config.ReadWorkload.MaxItems,
+		}
 		err := p.manager.workloads.StartWorkload(ctx, workload.UpdateWorkloadName, updateConfig)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan starting failed")
@@ -53,7 +56,10 @@ func (p *ReadWritePlan) Start(config Config) error {
 	}
 
 	if config.ReadWorkload != nil {
-		readConfig := workload.Config{ScaleFactor: config.ReadWorkload.ScaleFactor}
+		readConfig := workload.Config{
+			ScaleFactor: config.ReadWorkload.ScaleFactor,
+			MaxItems:    config.ReadWorkload.MaxItems,
+		}
 		err := p.manager.workloads.StartWorkload(ctx, workload.ReadWorkloadName, readConfig)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan starting failed")

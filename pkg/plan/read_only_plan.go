@@ -28,6 +28,7 @@ func (p *ReadOnlyPlan) Start(config Config) error {
 
 	workloadConfig := workload.Config{
 		ScaleFactor: config.ReadWorkload.ScaleFactor,
+		MaxItems:    config.ReadWorkload.MaxItems,
 	}
 	err := p.manager.workloads.StartWorkload(ctx, workload.ReadWorkloadName, workloadConfig)
 	if err != nil {

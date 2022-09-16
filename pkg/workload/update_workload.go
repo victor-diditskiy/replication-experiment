@@ -3,12 +3,10 @@ package workload
 import (
 	"context"
 	"fmt"
-	"math/rand"
-	"sync"
-	"time"
-
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"math/rand"
+	"sync"
 
 	"github.com/victor_diditskiy/replication_experiment/pkg/entity"
 	"github.com/victor_diditskiy/replication_experiment/pkg/storage"
@@ -50,39 +48,6 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 	uw.internalCtx = ctx
 	uw.contextCancel = cancel
 
-	var entriesCount int64
-	countChan := make(chan struct{})
-	go func() {
-		cnt, err := uw.storage.Count()
-		if err != nil {
-			uw.log.
-				Error(fmt.Sprintf("failed to count data at storage: %s", err))
-		}
-		entriesCount = cnt
-		countChan <- struct{}{}
-
-		for {
-			select {
-			case <-uw.internalCtx.Done():
-				uw.log.Info("update workload finished")
-				return
-			default:
-			}
-
-			cnt, err := uw.storage.Count()
-			if err != nil {
-				uw.log.
-					Error(fmt.Sprintf("failed to count data at storage: %s", err))
-			}
-
-			entriesCount = cnt
-
-			time.Sleep(time.Second)
-		}
-	}()
-
-	<-countChan
-
 	for i := 0; i < conf.ScaleFactor; i++ {
 		go func() {
 			for {
@@ -92,12 +57,7 @@ func (uw *UpdateWorkload) Start(ctx context.Context, conf Config) error {
 				default:
 				}
 
-				if entriesCount == 0 {
-					time.Sleep(100 * time.Millisecond)
-					continue
-				}
-
-				id := rand.Int63n(entriesCount)
+				id := rand.Int63n(int64(conf.MaxItems))
 				if id == 0 {
 					id += 1
 				}

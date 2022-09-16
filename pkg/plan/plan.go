@@ -17,6 +17,7 @@ type Name string
 type ConfigItem struct {
 	ScaleFactor int
 	BatchSize   int
+	MaxItems    int
 }
 type Config struct {
 	ReadWorkload   *ConfigItem

@@ -41,7 +41,10 @@ func (p *WriteOnlyPlan) Start(config Config) error {
 	}
 
 	if config.UpdateWorkload != nil {
-		updateConfig := workload.Config{ScaleFactor: config.UpdateWorkload.ScaleFactor}
+		updateConfig := workload.Config{
+			ScaleFactor: config.UpdateWorkload.ScaleFactor,
+			MaxItems:    config.UpdateWorkload.MaxItems,
+		}
 		err := p.manager.workloads.StartWorkload(ctx, workload.UpdateWorkloadName, updateConfig)
 		if err != nil {
 			return errors.Wrap(err, "write-only plan starting failed")

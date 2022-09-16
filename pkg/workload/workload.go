@@ -36,6 +36,7 @@ func NewWorkloads(log logrus.FieldLogger, storage storage.CombinedStorage) Workl
 type Config struct {
 	ScaleFactor int
 	BatchSize   int
+	MaxItems    int
 }
 
 func (w *Workloads) StartWorkload(

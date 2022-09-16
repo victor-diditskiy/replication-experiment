@@ -92,7 +92,10 @@ func (s *Storage) Get(id int64) (*entity.Data, error) {
 	}
 	defer rows.Close()
 
-	rows.Next()
+	rows.NextResultSet()
+	if !rows.Next() {
+		return nil, errors.Wrap(rows.Err(), "failed to get next row")
+	}
 
 	data := &entity.Data{}
 	err = rows.Scan(&data.ID, &data.Name, &data.Value, &data.CreatedAt, &data.UpdatedAt)

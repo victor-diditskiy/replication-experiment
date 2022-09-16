@@ -17,6 +17,7 @@ type Handler struct {
 
 type ExperimentRequest struct {
 	PlanName     string `json:"plan_name"`
+	MaxItems     int    `json:"max_items"`
 	ReadWorkload *struct {
 		ScaleFactor int `json:"scale_factor"`
 	} `json:"read_workload,omitempty"`
@@ -68,6 +69,7 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if req.ReadWorkload != nil {
 		config.ReadWorkload = &plan.ConfigItem{
 			ScaleFactor: req.ReadWorkload.ScaleFactor,
+			MaxItems:    req.MaxItems,
 		}
 	}
 
@@ -79,7 +81,10 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.UpdateWorkload != nil {
-		config.UpdateWorkload = &plan.ConfigItem{ScaleFactor: req.UpdateWorkload.ScaleFactor}
+		config.UpdateWorkload = &plan.ConfigItem{
+			ScaleFactor: req.UpdateWorkload.ScaleFactor,
+			MaxItems:    req.MaxItems,
+		}
 	}
 
 	command := plan.Command{
