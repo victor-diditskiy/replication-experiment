@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
+	_ "net/http/pprof"
+	"os"
+	"strconv"
 
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
@@ -21,6 +25,7 @@ import (
 
 const (
 	DBConfigPath = "./config/db.yml"
+	defaultPort  = 80
 )
 
 func main() {
@@ -52,8 +57,20 @@ func main() {
 	router.Path("/api/experiment/stop").Handler(stopExperimentHandler).Methods("POST")
 	router.Path("/prometheus").Handler(promhttp.Handler())
 
+	d := http.DefaultServeMux
+	router.PathPrefix("/debug").Handler(d)
+
 	log.Info("Starting web server")
-	err = http.ListenAndServe(":80", router)
+
+	port := defaultPort
+	portEnv := os.Getenv("PORT")
+	if portEnv != "" {
+		parsedPort, err := strconv.ParseInt(portEnv, 10, 64)
+		if err == nil {
+			port = int(parsedPort)
+		}
+	}
+	err = http.ListenAndServe(fmt.Sprintf(":%d", port), router)
 	if err != nil {
 		log.Fatal(err)
 	}
