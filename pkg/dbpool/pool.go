@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 
 	"github.com/pkg/errors"
@@ -99,6 +100,9 @@ func (p *DBPool) GetRandomLeader() *sql.DB {
 }
 
 func (p *DBPool) GetRandomFollower() *sql.DB {
+	l := len(p.followers)
+
+	r := rand.Intn(l)
 	// TODO: configure returning random follower
-	return p.followers[0]
+	return p.followers[r]
 }
