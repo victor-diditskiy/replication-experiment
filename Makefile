@@ -90,10 +90,12 @@ upload-follower-pgconfig:
 .PHONY: install-zsh
 install-zsh:
 	@echo "+ @"
-	scp scripts/install_zsh.sh pguser@$(NODE):/home/pguser/install_zsh.sh
+	scp scripts/zsh/install_zsh.sh user@$(NODE):/home/user/install_zsh.sh
+	scp scripts/zsh/oh.tar user@$(NODE):/home/user/oh.tar
+	scp scripts/zsh/zshrc user@$(NODE):/home/user/.zshrc
 
-	ssh pguser@$(NODE) chmod +x ./install_zsh.sh
-	ssh pguser@$(NODE) sudo ./install_zsh.sh
+	ssh user@$(NODE) chmod +x ./install_zsh.sh
+	ssh user@$(NODE) sudo ./install_zsh.sh
 
 .PHONY: attach-psql
 attach-psql:
@@ -104,4 +106,3 @@ attach-psql:
 restart-psql:
 	@echo "+ @"
 	ssh pguser@$(NODE) sudo systemctl restart postgresql
-

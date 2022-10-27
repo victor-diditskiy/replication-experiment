@@ -5,6 +5,10 @@ create database replication_experiment;
 
 grant all privileges on database replication_experiment to replication;
 
+grant all privileges on database replication_experiment to luser;
+grant all privileges on table data to luser;
+grant all privileges on sequence data_id_seq to luser;
+
 # Get wal receiver statistic
 select pg_current_wal_lsn();
 

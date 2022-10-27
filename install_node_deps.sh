@@ -42,4 +42,7 @@ WantedBy=multi-user.target
 EndOfMessage
 ) && echo $SRV > sudo /etc/systemd/system/node_exporter.service
 
+sudo systemctl daemon-reload
+sudo systemctl restart node_exporter.service
+
 DATA_SOURCE_NAME="postgresql://user1:Q4QLpgywgXGtT6@84.252.142.120:5432/replication_experiment?sslmode=disable" ./postgres_exporter &
