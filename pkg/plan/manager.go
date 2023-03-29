@@ -18,7 +18,11 @@ type CommandName string
 
 type Plans map[Name]Plan
 
-type Manager struct {
+type Manager interface {
+	Execute(command Command) error
+}
+
+type manager struct {
 	hasActivePlan bool
 	m             sync.Mutex
 
@@ -33,23 +37,23 @@ type Command struct {
 	Config   Config
 }
 
-func NewManager(workloads workload.Workloads) *Manager {
-	manager := &Manager{
+func NewManager(workloads workload.Workloads) Manager {
+	m := &manager{
 		m: sync.Mutex{},
 
 		workloads: workloads,
 	}
 	plans := Plans{
-		ReadOnlyPlanName:  NewReadOnlyPlan(manager),
-		WriteOnlyPlanName: NewWriteOnlyPlan(manager),
-		ReadWritePlanName: NewReadWritePlan(manager),
+		ReadOnlyPlanName:  NewReadOnlyPlan(workloads),
+		WriteOnlyPlanName: NewWriteOnlyPlan(workloads),
+		ReadWritePlanName: NewReadWritePlan(m),
 	}
-	manager.plans = plans
+	m.plans = plans
 
-	return manager
+	return m
 }
 
-func (m *Manager) Execute(command Command) error {
+func (m *manager) Execute(command Command) error {
 	m.m.Lock()
 	defer m.m.Unlock()
 
@@ -75,7 +79,7 @@ func (m *Manager) Execute(command Command) error {
 	return nil
 }
 
-func (m *Manager) startPlan(planConfig Config, plan Plan) error {
+func (m *manager) startPlan(planConfig Config, plan Plan) error {
 	if m.activePlan != nil {
 		return errors.New("another plan has already been activated")
 	}
@@ -90,7 +94,7 @@ func (m *Manager) startPlan(planConfig Config, plan Plan) error {
 	return nil
 }
 
-func (m *Manager) stopPlan() error {
+func (m *manager) stopPlan() error {
 	if m.activePlan == nil {
 		return errors.New("no active plan to stop")
 	}

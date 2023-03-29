@@ -10,6 +10,8 @@ import (
 	"github.com/victor_diditskiy/replication_experiment/pkg/storage"
 )
 
+//go:generate mockgen -source=$GOFILE -destination ./mock/workload.go -package mock
+
 const (
 	ReadWorkloadName   Name = "read"
 	InsertWorkloadName Name = "insert"

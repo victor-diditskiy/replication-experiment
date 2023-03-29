@@ -9,11 +9,12 @@ import (
 )
 
 type ReadWritePlan struct {
-	manager         *Manager
+	manager         Manager
+	workloads       workload.Workloads
 	activeWorkloads []workload.Name
 }
 
-func NewReadWritePlan(manager *Manager) *ReadWritePlan {
+func NewReadWritePlan(manager Manager) *ReadWritePlan {
 	return &ReadWritePlan{
 		manager: manager,
 	}
@@ -34,7 +35,7 @@ func (p *ReadWritePlan) Start(config Config) error {
 			ScaleFactor: config.InsertWorkload.ScaleFactor,
 			BatchSize:   config.ReadWorkload.BatchSize,
 		}
-		err := p.manager.workloads.StartWorkload(ctx, workload.InsertWorkloadName, insertConfig)
+		err := p.workloads.StartWorkload(ctx, workload.InsertWorkloadName, insertConfig)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan starting failed")
 		}
@@ -47,7 +48,7 @@ func (p *ReadWritePlan) Start(config Config) error {
 			ScaleFactor: config.UpdateWorkload.ScaleFactor,
 			MaxItems:    config.ReadWorkload.MaxItems,
 		}
-		err := p.manager.workloads.StartWorkload(ctx, workload.UpdateWorkloadName, updateConfig)
+		err := p.workloads.StartWorkload(ctx, workload.UpdateWorkloadName, updateConfig)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan starting failed")
 		}
@@ -60,7 +61,7 @@ func (p *ReadWritePlan) Start(config Config) error {
 			ScaleFactor: config.ReadWorkload.ScaleFactor,
 			MaxItems:    config.ReadWorkload.MaxItems,
 		}
-		err := p.manager.workloads.StartWorkload(ctx, workload.ReadWorkloadName, readConfig)
+		err := p.workloads.StartWorkload(ctx, workload.ReadWorkloadName, readConfig)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan starting failed")
 		}
@@ -73,7 +74,7 @@ func (p *ReadWritePlan) Start(config Config) error {
 
 func (p *ReadWritePlan) Stop() error {
 	for _, activeWorkload := range p.activeWorkloads {
-		err := p.manager.workloads.StopWorkload(activeWorkload)
+		err := p.workloads.StopWorkload(activeWorkload)
 		if err != nil {
 			return errors.Wrap(err, "read-write plan stopping failed")
 		}
