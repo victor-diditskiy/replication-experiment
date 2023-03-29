@@ -41,6 +41,26 @@ var (
 	}, []string{TypeLabel, OperationLabel})
 )
 
+type Metric interface {
+	NewCounter() (Counter, error)
+	NewHistogram() (Histogram, error)
+}
+
+type Counter interface {
+	Inc() error
+}
+
+type Histogram interface {
+	Start() (func() error, error)
+}
+
+type histogram struct {
+}
+
+func (h *histogram) Start() (func() error, error) {
+
+}
+
 func createMetricName(parts ...string) string {
 	return fmt.Sprintf("%s_%s", baseName, strings.Join(parts, "_"))
 }
